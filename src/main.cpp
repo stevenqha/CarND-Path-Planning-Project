@@ -19,7 +19,6 @@ using std::vector;
 #define TIME_STEP 0.02
 
 state_t curr_state = LANE_KEEP;
-state_t prev_state = LANE_KEEP;
 
 int main() {
     uWS::Hub h;
@@ -83,12 +82,12 @@ int main() {
                     // j[1] is the data JSON object
 
                     // Main car's localization Data
-                    double car_x = j[1]["x"];
-                    double car_y = j[1]["y"];
-                    double car_s = j[1]["s"];
-                    double car_d = j[1]["d"];
+                    double car_x = j[1]["x"];           // m
+                    double car_y = j[1]["y"];           // m
+                    double car_s = j[1]["s"];           // m
+                    double car_d = j[1]["d"];           // m
                     double car_yaw = j[1]["yaw"];
-                    double car_speed = j[1]["speed"];
+                    double car_speed = j[1]["speed"];   // mph
 
                     // Previous path data given to the Planner
                     auto previous_path_x = j[1]["previous_path_x"];
@@ -109,13 +108,17 @@ int main() {
                     */
 
                     int prev_size = previous_path_x.size();
+                    double car_s_next = car_s;
 
                     if (prev_size > 0) {
                         car_s = end_path_s;
+
+                        car_s_next += car_speed / 2.24 * 0.04; // Approximate future position
                     }
 
                     bool too_close = false; // True if too close to a car in front
                     int anchor_pts_space = 30;
+                    double min_speed = 0;
 
                     // Find ref_v to use
                     for (int i = 0; i < sensor_fusion.size(); i++) {
@@ -134,24 +137,22 @@ int main() {
                             if (check_car_s > car_s && (check_car_s - car_s) < 20){
                                 //ref_vel = 29.5;
                                 too_close = true;
+                                min_speed = check_speed;
 
-                                prev_state = curr_state;
                                 switch (curr_state) {
 
                                     case LANE_KEEP:
 
                                         switch (lane) {
                                             case LANE_LEFT: {
-                                                // If we didn't just turn into the left lane
-//                                                if (prev_state != LANE_CHANGE_RIGHT) {
                                                 // Calculate cost of staying in left lane
                                                 double new_lane_speed;
                                                 float switch_cost = calc_lane_switch_cost(LANE_CENTER, sensor_fusion,
-                                                                                          time_in_path, 30, car_s,
+                                                                                          0.04, check_speed, car_speed, car_s_next,
                                                                                           new_lane_speed);
 
                                                 // Calculate cost of staying in center lane
-                                                float stay_cost = calc_lane_keep_cost(lane, new_lane_speed, 30);
+                                                float stay_cost = calc_lane_keep_cost(lane, new_lane_speed, check_speed);
 
                                                 std::cout << "Switch cost " << switch_cost << std::endl;
                                                 std::cout << "Stay cost   " << stay_cost << std::endl;
@@ -163,7 +164,7 @@ int main() {
                                                     curr_state = LANE_CHANGE_RIGHT;
                                                     anchor_pts_space = 25;
                                                 }
-//                                                }
+
                                                 break;
                                             }
 
@@ -171,16 +172,16 @@ int main() {
                                                 // Calculate cost of switching to left lane
                                                 double new_lane_speed;
                                                 float left_switch_cost = calc_lane_switch_cost(LANE_LEFT, sensor_fusion,
-                                                                                          time_in_path, 30, car_s,
+                                                                                          0.04, check_speed, car_speed, car_s_next,
                                                                                           new_lane_speed);
 
                                                 // Calculate cost of switching to right lane
                                                 float right_switch_cost = calc_lane_switch_cost(LANE_RIGHT, sensor_fusion,
-                                                                                               time_in_path, 30, car_s,
+                                                                                               0.04, check_speed, car_speed, car_s_next,
                                                                                                new_lane_speed);
 
                                                 // Calculate cost of staying in center lane
-                                                float stay_cost = calc_lane_keep_cost(lane, new_lane_speed, 30);
+                                                float stay_cost = calc_lane_keep_cost(lane, new_lane_speed, check_speed);
 
                                                 std::cout << "Left cost   " << left_switch_cost << std::endl;
                                                 std::cout << "Right cost  " << right_switch_cost << std::endl;
@@ -208,11 +209,11 @@ int main() {
                                                 // Calculate cost of staying in left lane
                                                 double new_lane_speed;
                                                 float switch_cost = calc_lane_switch_cost(LANE_CENTER, sensor_fusion,
-                                                                                          time_in_path, 30, car_s,
+                                                                                          0.04, check_speed, car_speed, car_s_next,
                                                                                           new_lane_speed);
 
                                                 // Calculate cost of staying in center lane
-                                                float stay_cost = calc_lane_keep_cost(lane, new_lane_speed, 30);
+                                                float stay_cost = calc_lane_keep_cost(lane, new_lane_speed, check_speed);
 
                                                 std::cout << "Switch cost " << switch_cost << std::endl;
                                                 std::cout << "Stay cost   " << stay_cost << std::endl;
@@ -232,12 +233,10 @@ int main() {
                                         break;
                                     case LANE_CHANGE_LEFT:
                                         // We just did a lane change, stay in our lane
-
                                         curr_state = LANE_KEEP;
                                         break;
                                     case LANE_CHANGE_RIGHT:
                                         // We just did a lane change, stay in our lane
-//                                        prev_state = curr_state;
                                         curr_state = LANE_KEEP;
                                         break;
                                 }
@@ -313,6 +312,7 @@ int main() {
                         next_x_vals.push_back(previous_path_x[i]);
                         next_y_vals.push_back(previous_path_y[i]);
                     }
+
                     // Calculate how to break up spline points so that we travel at desired velocity
                     double target_x = 30.0; // 30.0 m is the distance horizon
                     double target_y = s(target_x);
@@ -323,8 +323,15 @@ int main() {
                         // Reduce speed if too close, add if no longer close
                         if (too_close) {
                             ref_vel -= .224;
+
+                            if (ref_vel < min_speed)
+                                ref_vel = min_speed;
+
                         } else if (ref_vel < 49.5) {
                             ref_vel += .224;
+
+                            if (ref_vel > 49.5)
+                                ref_vel = 49.5;
                         }
                         double N = (target_dist/(0.02*ref_vel/2.24)); // 2.24 is to covert from mph to m/s
                         double x_point = x_add_on + target_x/N;

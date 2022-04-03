@@ -5,6 +5,9 @@
 #ifndef PATH_PLANNING_COMMON_H
 #define PATH_PLANNING_COMMON_H
 
+#define MILE_PH_TO_METER_PS 2.24
+#define MAX_SPEED           49.5
+
 typedef enum {
     LANE_KEEP,
     LANE_CHANGE_LEFT,
