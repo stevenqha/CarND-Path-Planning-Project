@@ -12,8 +12,8 @@
 #define CENTER_LANE_WEIGHT  0.1
 #define SWITCH_WEIGHT       0.1
 
-// curr_speed is in m/s
-// front_speed is in mph
+// curr_speed is in mph
+// front_speed is in m/s
 float calc_lane_switch_cost(int new_lane, sensor_fusion_t sensor_fusion, double time_til_change, double front_speed, double curr_speed, double change_pos, double &min_new_speed) {
     float cost = 0;
     min_new_speed = MAX_SPEED / MILE_PH_TO_METER_PS; // max allowable speed (if no cars in the other lane we will be able to go at max speed)
@@ -45,7 +45,7 @@ float calc_lane_switch_cost(int new_lane, sensor_fusion_t sensor_fusion, double 
             }
         }
     }
-    std::cout << "Min Speed   " << min_new_speed << "Front speed   " << front_speed << std::endl;
+//    std::cout << "Min Speed   " << min_new_speed << "Front speed   " << front_speed << std::endl;
 
     // Calculate cost of switching
     cost += SWITCH_WEIGHT * 100;

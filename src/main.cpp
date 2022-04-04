@@ -145,7 +145,7 @@ int main() {
 
                                         switch (lane) {
                                             case LANE_LEFT: {
-                                                // Calculate cost of staying in left lane
+                                                // Calculate cost of changing to left lane
                                                 double new_lane_speed;
                                                 float switch_cost = calc_lane_switch_cost(LANE_CENTER, sensor_fusion,
                                                                                           0.04, check_speed, car_speed, car_s_next,
@@ -154,11 +154,11 @@ int main() {
                                                 // Calculate cost of staying in center lane
                                                 float stay_cost = calc_lane_keep_cost(lane, new_lane_speed, check_speed);
 
-                                                std::cout << "Switch cost " << switch_cost << std::endl;
-                                                std::cout << "Stay cost   " << stay_cost << std::endl;
+//                                                std::cout << "Switch cost " << switch_cost << std::endl;
+//                                                std::cout << "Stay cost   " << stay_cost << std::endl;
 
                                                 if (switch_cost < stay_cost) {
-                                                    std::cout << "LANE_CHANGE_RIGHT" << std::endl;
+//                                                    std::cout << "LANE_CHANGE_RIGHT" << std::endl;
                                                     lane = LANE_CENTER;
                                                     too_close = false;
                                                     curr_state = LANE_CHANGE_RIGHT;
@@ -183,19 +183,19 @@ int main() {
                                                 // Calculate cost of staying in center lane
                                                 float stay_cost = calc_lane_keep_cost(lane, new_lane_speed, check_speed);
 
-                                                std::cout << "Left cost   " << left_switch_cost << std::endl;
-                                                std::cout << "Right cost  " << right_switch_cost << std::endl;
-                                                std::cout << "Stay cost   " << stay_cost << std::endl;
+//                                                std::cout << "Left cost   " << left_switch_cost << std::endl;
+//                                                std::cout << "Right cost  " << right_switch_cost << std::endl;
+//                                                std::cout << "Stay cost   " << stay_cost << std::endl;
 
                                                 if (left_switch_cost <= right_switch_cost && left_switch_cost < stay_cost) {
-                                                    std::cout << "LANE_CHANGE_LEFT" << std::endl;
+//                                                    std::cout << "LANE_CHANGE_LEFT" << std::endl;
                                                     lane = LANE_LEFT;
                                                     too_close = false;
                                                     curr_state = LANE_CHANGE_LEFT;
                                                     anchor_pts_space = 25;
                                                 }
                                                 else if (right_switch_cost <= left_switch_cost && right_switch_cost < stay_cost) {
-                                                    std::cout << "LANE_CHANGE_RIGHT" << std::endl;
+//                                                    std::cout << "LANE_CHANGE_RIGHT" << std::endl;
                                                     lane = LANE_RIGHT;
                                                     too_close = false;
                                                     curr_state = LANE_CHANGE_RIGHT;
@@ -215,11 +215,11 @@ int main() {
                                                 // Calculate cost of staying in center lane
                                                 float stay_cost = calc_lane_keep_cost(lane, new_lane_speed, check_speed);
 
-                                                std::cout << "Switch cost " << switch_cost << std::endl;
-                                                std::cout << "Stay cost   " << stay_cost << std::endl;
+//                                                std::cout << "Switch cost " << switch_cost << std::endl;
+//                                                std::cout << "Stay cost   " << stay_cost << std::endl;
 
                                                 if (switch_cost < stay_cost) {
-                                                    std::cout << "LANE_CHANGE_LEFT" << std::endl;
+//                                                    std::cout << "LANE_CHANGE_LEFT" << std::endl;
                                                     lane = LANE_CENTER;
                                                     too_close = false;
                                                     curr_state = LANE_CHANGE_LEFT;
